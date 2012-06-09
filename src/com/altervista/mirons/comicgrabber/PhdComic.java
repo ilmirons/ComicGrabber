@@ -13,84 +13,91 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 
 public final class PhdComic extends Comic implements ComicNavigator {
 
-	int currentId;
-	Strip current;
-	int relativePos = 0;
+	private static final String TAG = "PhdComic";
+	private int currentId;
 	
 	public PhdComic() {
 		COMIC_AUTHOR = "Jorge Cham";
 		COMIC_TITLE = "PhD - Piled Higher and Deeper";
 		BASE_ADDR = "http://www.phdcomics.com/comics/archive.php?comicid=%d";
 		CURRENT_ADDR = "http://www.phdcomics.com/comics.php";
-		current = latest();
 	}
 	
-	
-	 private Strip get (int id) {
-		 
-		 try {
-			Document rawPage = getWWWPage(new URL(String.format(BASE_ADDR, id)));
+	private Strip get (int id) {
+
+		String urlString = null;
+		try {
 			
-			NodeList links = rawPage.getElementsByTagName( "link" );
-			NodeList metas = rawPage.getElementsByTagName("meta");
-			
-			for (int i = 0; i < metas.getLength(); i++) {
-				
-				Element e = (Element) metas.item(i);
-				
-				if (e.getAttribute("description").equals("title") ) {
-					// TODO
-				}
-				
-			}
-		    
-		    // for every link tag
-		    Element link = (Element) links.item(0);
-		    Bitmap image = getImage(new URL(link.getAttribute("href")));
-		    
-			
+			urlString = String.format(BASE_ADDR, id);
+			URL url = new URL(urlString);
+			currentId = id;
+			return getStripFromUrl(url);
+
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e(TAG, "Malformed URL: " + urlString, e);
+		} catch (Exception e) {
+			Log.e(TAG, "Error in parsing page " + CURRENT_ADDR, e);
 		}
-		 
-		 return null;
+		return null;
+	}
+
+
+	private Strip getStripFromUrl(URL url) throws IOException,
+			SAXException, ParserConfigurationException, MalformedURLException {
+		Bitmap image;
+		String stripTitle = "";
+		Document rawPage = getWWWPage(url);
+		NodeList links = rawPage.getElementsByTagName( "link" );
+		NodeList metas = rawPage.getElementsByTagName("meta");
+		
+		for (int i = 0; i < metas.getLength(); i++) {
+			
+			Element e = (Element) metas.item(i);
+			
+			if (e.getAttribute("name").equals("title") ) {
+				stripTitle = e.getAttribute("content");
+			}	
+		}
+		Element link = (Element) links.item(0);
+		image = getImage(new URL(link.getAttribute("href")));
+		
+		return new Strip(this, stripTitle, image);
 	}
 
 	public Strip next() {
-		return null;
+		return get(++currentId);
 	}
 
 	public Strip next(int n) {
-		return null;
+		return get(currentId += n);
 	}
 
 	public Strip previous() {
-		return null;
+		return get(currentId -= 1);
 	}
 
 	public Strip previous(int n) {
-		return null;
+		return get(currentId -= n);
 	}
 
 	public Strip latest() {
+		try {
+			return getStripFromUrl(new URL(CURRENT_ADDR));
+		} catch (MalformedURLException e) {
+			Log.e(TAG, "Malformed URL: " + CURRENT_ADDR, e);
+		} catch (Exception e) {
+			Log.e(TAG, "Error in parsing page " + CURRENT_ADDR, e);
+		}
 		return null;
 	}
 
 	public Strip first() {
-		return null;
+		currentId = 1;
+		return get(currentId);
 	}
 
 }
