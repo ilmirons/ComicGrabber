@@ -1,19 +1,17 @@
 package com.altervista.mirons.comicgrabber;
 
-import android.graphics.Bitmap;
-
 public interface ComicNavigator {
 	
-	public Bitmap next();
+	public Strip next();
 	
-	public Bitmap next(int n);
+	public Strip next(int n);
 	
-	public Bitmap previous();
+	public Strip previous();
 	
-	public Bitmap previous(int n);
+	public Strip previous(int n);
 	
-	public Bitmap latest();
+	public Strip latest();
 	
-	public Bitmap first();
+	public Strip first();
 
 }
